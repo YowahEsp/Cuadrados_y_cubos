@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potencias Interactivas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            color: #666;
+        }
+        
+        .figures-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .figure-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 3px solid transparent;
+        }
+        
+        .figure-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .figure-card.active {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 250px;
+            margin: 20px 0;
+            position: relative;
+            touch-action: none;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+        
+        .formula {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .fullscreen-overlay.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fullscreen-canvas {
+            width: 90vw;
+            height: 80vh;
+            max-width: 1200px;
+            max-height: 800px;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff4444;
+            padding: 10px 20px;
+        }
+        
+        .label {
+            color: #333;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📐 Potencias Matemáticas Interactivas 📐</h1>
+        
+        <!-- CUADRADOS -->
+        <div class="section">
+            <div class="section-title">CUADRADOS</div>
+            <div class="section-subtitle">Potencias de exponente 2</div>
+            
+            <div class="figures-grid">
+                <div class="figure-card" onclick="enlargeSquare(2)">
+                    <div class="label">a) 2²</div>
+                    <div class="canvas-container">
+                        <canvas id="square2"></canvas>
+                    </div>
+                    <div class="formula">2² = 2 × 2 = 4<br>2 al cuadrado</div>
+                </div>
+                
+                <div class="figure-card" onclick="enlargeSquare(3)">
+                    <div class="label">b) 3²</div>
+                    <div class="canvas-container">
+                        <canvas id="square3"></canvas>
+                    </div>
+                    <div class="formula">3² = 3 × 3 = 9<br>3 al cuadrado</div>
+                </div>
+                
+                <div class="figure-card" onclick="enlargeSquare(4)">
+                    <div class="label">c) 4²</div>
+                    <div class="canvas-container">
+                        <canvas id="square4"></canvas>
+                    </div>
+                    <div class="formula">4² = 4 × 4 = 16<br>4 al cuadrado</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="toggleSquareColors()">🎨 Cambiar Colores</button>
+            </div>
+        </div>
+        
+        <!-- CUBOS -->
+        <div class="section">
+            <div class="section-title">CUBOS</div>
+            <div class="section-subtitle">Potencias de exponente 3</div>
+            
+            <div class="figures-grid">
+                <div class="figure-card" onclick="enlargeCube(2)">
+                    <div class="label">d) 2³</div>
+                    <div class="canvas-container">
+                        <canvas id="cube2"></canvas>
+                    </div>
+                    <div class="formula">2³ = 2 × 2 × 2 = 8<br>2 al cubo</div>
+                </div>
+                
+                <div class="figure-card" onclick="enlargeCube(3)">
+                    <div class="label">e) 3³</div>
+                    <div class="canvas-container">
+                        <canvas id="cube3"></canvas>
+                    </div>
+                    <div class="formula">3³ = 3 × 3 × 3 = 27<br>3 al cubo</div>
+                </div>
+                
+                <div class="figure-card" onclick="enlargeCube(4)">
+                    <div class="label">f) 4³</div>
+                    <div class="canvas-container">
+                        <canvas id="cube4"></canvas>
+                    </div>
+                    <div class="formula">4³ = 4 × 4 × 4 = 64<br>4 al cubo</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="toggleWireframe()">🔲 Modo Cristalino</button>
+                <button onclick="toggleRotation()">🔄 Auto-Rotación</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overlay para ampliación -->
+    <div class="fullscreen-overlay" id="overlay">
+        <button class="close-btn" onclick="closeOverlay()">✕ Cerrar</button>
+        <canvas class="fullscreen-canvas" id="fullscreenCanvas"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Variables globales
+        let scenes = {};
+        let cameras = {};
+        let renderers = {};
+        let cubes = {};
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let autoRotate = true;
+        let wireframeMode = false;
+        let squareColorIndex = 0;
+        const squareColors = [
+            ['#b8d4ff', '#b8d4ff'],
+            ['#ffb8b8', '#ffb8b8'],
+            ['#b8ffb8', '#b8ffb8'],
+            ['#ffebb8', '#ffebb8']
+        ];
+
+        // Inicializar cuadrados 2D
+        function initSquare(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+            
+            drawSquare(ctx, canvas.offsetWidth, canvas.offsetHeight, size, squareColorIndex);
+            
+            // Interacción táctil
+            let scale = 1;
+            canvas.addEventListener('click', () => {
+                scale = scale === 1 ? 1.2 : 1;
+                drawSquare(ctx, canvas.offsetWidth, canvas.offsetHeight, size, squareColorIndex, scale);
+            });
+        }
+
+        function drawSquare(ctx, w, h, size, colorIdx, scale = 1) {
+            ctx.clearRect(0, 0, w, h);
+            const cellSize = Math.min(w, h) * 0.7 / size * scale;
+            const startX = (w - cellSize * size) / 2;
+            const startY = (h - cellSize * size) / 2;
+            
+            const colors = squareColors[colorIdx];
+            
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    const x = startX + i * cellSize;
+                    const y = startY + j * cellSize;
+                    
+                    ctx.fillStyle = colors[0];
+                    ctx.fillRect(x, y, cellSize - 2, cellSize - 2);
+                    
+                    ctx.strokeStyle = '#4a5568';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, cellSize - 2, cellSize - 2);
+                }
+            }
+        }
+
+        function toggleSquareColors() {
+            squareColorIndex = (squareColorIndex + 1) % squareColors.length;
+            [2, 3, 4].forEach(size => {
+                const canvas = document.getElementById(`square${size}`);
+                const ctx = canvas.getContext('2d');
+                drawSquare(ctx, canvas.offsetWidth, canvas.offsetHeight, size, squareColorIndex);
+            });
+        }
+
+        // Inicializar cubos 3D
+        function initCube(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f4f8);
+            
+            const camera = new THREE.PerspectiveCamera(50, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
+            camera.position.set(size * 2, size * 1.5, size * 2.5);
+            camera.lookAt(0, 0, 0);
+            
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Iluminación
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7);
+            scene.add(directionalLight);
+            
+            // Crear grupo de cubos
+            const group = new THREE.Group();
+            const colors = [0x90EE90, 0xFFB366, 0xFFEB3B];
+            const colorIndex = size - 2;
+            const cubeletSize = 0.9;
+            const gap = 0.1;
+            
+            for (let x = 0; x < size; x++) {
+                for (let y = 0; y < size; y++) {
+                    for (let z = 0; z < size; z++) {
+                        const geometry = new THREE.BoxGeometry(cubeletSize, cubeletSize, cubeletSize);
+                        const material = new THREE.MeshPhongMaterial({
+                            color: colors[colorIndex],
+                            transparent: false,
+                            opacity: 1,
+                            shininess: 100
+                        });
+                        const cube = new THREE.Mesh(geometry, material);
+                        
+                        const edges = new THREE.EdgesGeometry(geometry);
+                        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ 
+                            color: 0x000000, 
+                            linewidth: 2 
+                        }));
+                        cube.add(line);
+                        
+                        cube.position.set(
+                            (x - (size - 1) / 2) * (cubeletSize + gap),
+                            (y - (size - 1) / 2) * (cubeletSize + gap),
+                            (z - (size - 1) / 2) * (cubeletSize + gap)
+                        );
+                        
+                        group.add(cube);
+                    }
+                }
+            }
+            
+            scene.add(group);
+            
+            scenes[canvasId] = scene;
+            cameras[canvasId] = camera;
+            renderers[canvasId] = renderer;
+            cubes[canvasId] = group;
+            
+            // Interacción
+            setupCubeInteraction(canvas, camera, group);
+        }
+
+        function setupCubeInteraction(canvas, camera, group) {
+            const onPointerDown = (e) => {
+                isDragging = true;
+                previousMousePosition = {
+                    x: e.clientX || e.touches[0].clientX,
+                    y: e.clientY || e.touches[0].clientY
+                };
+            };
+            
+            const onPointerMove = (e) => {
+                if (!isDragging) return;
+                
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                const deltaX = clientX - previousMousePosition.x;
+                const deltaY = clientY - previousMousePosition.y;
+                
+                group.rotation.y += deltaX * 0.01;
+                group.rotation.x += deltaY * 0.01;
+                
+                previousMousePosition = { x: clientX, y: clientY };
+            };
+            
+            const onPointerUp = () => {
+                isDragging = false;
+            };
+            
+            canvas.addEventListener('mousedown', onPointerDown);
+            canvas.addEventListener('mousemove', onPointerMove);
+            canvas.addEventListener('mouseup', onPointerUp);
+            canvas.addEventListener('touchstart', onPointerDown);
+            canvas.addEventListener('touchmove', onPointerMove);
+            canvas.addEventListener('touchend', onPointerUp);
+        }
+
+        function toggleWireframe() {
+            wireframeMode = !wireframeMode;
+            
+            // Actualizar los cubos principales
+            Object.keys(cubes).forEach(key => {
+                const group = cubes[key];
+                const size = parseInt(key.replace('cube', ''));
+                const colors = [0x90EE90, 0xFFB366, 0xFFEB3B];
+                const colorIndex = size - 2;
+                
+                group.children.forEach(cube => {
+                    if (wireframeMode) {
+                        // Modo cristalino: transparente como hielo
+                        cube.material.transparent = true;
+                        cube.material.opacity = 0.2;
+                        cube.material.color.setHex(0xe6f7ff);
+                    } else {
+                        // Modo normal: colores sólidos
+                        cube.material.transparent = false;
+                        cube.material.opacity = 1;
+                        cube.material.color.setHex(colors[colorIndex]);
+                    }
+                    cube.material.needsUpdate = true;
+                    
+                    // Actualizar color de las aristas
+                    if (cube.children[0]) {
+                        cube.children[0].material.color.setHex(wireframeMode ? 0x87ceeb : 0x000000);
+                        cube.children[0].material.needsUpdate = true;
+                    }
+                });
+            });
+        }
+
+        function toggleRotation() {
+            autoRotate = !autoRotate;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            Object.keys(renderers).forEach(key => {
+                if (autoRotate && !isDragging) {
+                    cubes[key].rotation.y += 0.005;
+                }
+                renderers[key].render(scenes[key], cameras[key]);
+            });
+        }
+
+        // Ampliación
+        function enlargeSquare(size) {
+            const overlay = document.getElementById('overlay');
+            const canvas = document.getElementById('fullscreenCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            overlay.classList.add('active');
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+            
+            drawSquare(ctx, canvas.offsetWidth, canvas.offsetHeight, size, squareColorIndex, 1.5);
+        }
+
+        function enlargeCube(size) {
+            const overlay = document.getElementById('overlay');
+            const canvas = document.getElementById('fullscreenCanvas');
+            
+            overlay.classList.add('active');
+            
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            
+            const camera = new THREE.PerspectiveCamera(50, canvas.offsetWidth / canvas.offsetHeight, 0.1, 1000);
+            camera.position.set(size * 1.8, size * 1.5, size * 2.2);
+            camera.lookAt(0, 0, 0);
+            
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 15, 10);
+            scene.add(directionalLight);
+            
+            const group = new THREE.Group();
+            const colors = [0x90EE90, 0xFFB366, 0xFFEB3B];
+            const colorIndex = size - 2;
+            const cubeletSize = 1.2; // Aumentado para ampliación
+            const gap = 0.15;
+            
+            for (let x = 0; x < size; x++) {
+                for (let y = 0; y < size; y++) {
+                    for (let z = 0; z < size; z++) {
+                        const geometry = new THREE.BoxGeometry(cubeletSize, cubeletSize, cubeletSize);
+                        const material = new THREE.MeshPhongMaterial({ 
+                            color: wireframeMode ? 0xe6f7ff : colors[colorIndex],
+                            transparent: wireframeMode,
+                            opacity: wireframeMode ? 0.2 : 1,
+                            shininess: 100
+                        });
+                        const cube = new THREE.Mesh(geometry, material);
+                        
+                        const edges = new THREE.EdgesGeometry(geometry);
+                        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ 
+                            color: wireframeMode ? 0x87ceeb : 0xffffff, 
+                            linewidth: 2 
+                        }));
+                        cube.add(line);
+                        
+                        cube.position.set(
+                            (x - (size - 1) / 2) * (cubeletSize + gap),
+                            (y - (size - 1) / 2) * (cubeletSize + gap),
+                            (z - (size - 1) / 2) * (cubeletSize + gap)
+                        );
+                        
+                        group.add(cube);
+                    }
+                }
+            }
+            
+            scene.add(group);
+            
+            // Variables locales para la interacción
+            let localIsDragging = false;
+            let localPrevMouse = { x: 0, y: 0 };
+            
+            const onPointerDown = (e) => {
+                localIsDragging = true;
+                localPrevMouse = {
+                    x: e.clientX || (e.touches && e.touches[0].clientX),
+                    y: e.clientY || (e.touches && e.touches[0].clientY)
+                };
+            };
+            
+            const onPointerMove = (e) => {
+                if (!localIsDragging) return;
+                
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                const deltaX = clientX - localPrevMouse.x;
+                const deltaY = clientY - localPrevMouse.y;
+                
+                group.rotation.y += deltaX * 0.01;
+                group.rotation.x += deltaY * 0.01;
+                
+                localPrevMouse = { x: clientX, y: clientY };
+            };
+            
+            const onPointerUp = () => {
+                localIsDragging = false;
+            };
+            
+            canvas.addEventListener('mousedown', onPointerDown);
+            canvas.addEventListener('mousemove', onPointerMove);
+            canvas.addEventListener('mouseup', onPointerUp);
+            canvas.addEventListener('mouseleave', onPointerUp);
+            canvas.addEventListener('touchstart', onPointerDown);
+            canvas.addEventListener('touchmove', onPointerMove);
+            canvas.addEventListener('touchend', onPointerUp);
+            
+            function animateFullscreen() {
+                if (overlay.classList.contains('active')) {
+                    if (autoRotate && !localIsDragging) {
+                        group.rotation.y += 0.005;
+                    }
+                    renderer.render(scene, camera);
+                    requestAnimationFrame(animateFullscreen);
+                }
+            }
+            animateFullscreen();
+        }
+
+        function closeOverlay() {
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        // Inicialización
+        window.addEventListener('load', () => {
+            initSquare('square2', 2);
+            initSquare('square3', 3);
+            initSquare('square4', 4);
+            
+            initCube('cube2', 2);
+            initCube('cube3', 3);
+            initCube('cube4', 4);
+            
+            animate();
+        });
+
+        // Responsive
+        window.addEventListener('resize', () => {
+            Object.keys(renderers).forEach(key => {
+                const canvas = document.getElementById(key);
+                cameras[key].aspect = canvas.offsetWidth / canvas.offsetHeight;
+                cameras[key].updateProjectionMatrix();
+                renderers[key].setSize(canvas.offsetWidth, canvas.offsetHeight);
+            });
+        });
+    </script>
+</body>
+</html>
