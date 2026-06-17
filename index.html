@@ -89,15 +89,20 @@
   .stage{position:relative;aspect-ratio:1/1;touch-action:none}
   .stage canvas{display:block;width:100%;height:100%}
 
-  /* contador grande superpuesto */
+  /* contador grande superpuesto (con fondo para no solaparse con la figura) */
   .counter{position:absolute;left:14px;bottom:12px;font-family:var(--mono);
     font-weight:700;line-height:1;pointer-events:none;
-    display:flex;align-items:baseline;gap:8px}
-  .counter .n{font-size:clamp(2.4rem,7vw,3.6rem);font-variant-numeric:tabular-nums}
-  .counter .u{font-size:.85rem;letter-spacing:.08em;text-transform:uppercase}
-  .square .counter{color:var(--cielo)}
+    display:flex;align-items:baseline;gap:8px;
+    padding:8px 13px;border-radius:13px;}
+  .counter .n{font-size:clamp(2.2rem,6.4vw,3.3rem);font-variant-numeric:tabular-nums}
+  .counter .u{font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}
+  .square .counter{color:var(--cielo);
+    background:rgba(251,250,245,.86);border:2px solid var(--tinta);
+    box-shadow:0 3px 12px rgba(30,42,82,.10)}
   .square .counter .u{color:#6b6655}
-  .cube .counter{color:var(--ambar)}
+  .cube .counter{color:var(--ambar);
+    background:rgba(11,15,33,.72);border:2px solid #2a3157;
+    box-shadow:0 3px 14px rgba(0,0,0,.35)}
   .cube .counter .u{color:#9aa6d6}
 
   /* controles por panel */
@@ -189,7 +194,7 @@
       </div>
       <div class="tools">
         <button id="cbRotate" aria-pressed="true">Girar</button>
-        <button id="cbExplode" aria-pressed="false">Separar capas</button>
+        <button id="cbExplode" aria-pressed="false">Separar piezas</button>
         <button id="cbCrystal" aria-pressed="false">Ver dentro</button>
       </div>
     </section>
@@ -239,6 +244,14 @@
     cristal:0x7fb0ff, aristaCristal:0x8fd6ff, ambar:0xe3a13a
   };
 
+  // dirección fija de cámara (unitaria); el encuadre se ajusta por distancia
+  var CAM = (function(){
+    var v={x:0.55,y:0.48,z:0.85};
+    var L=Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+    return {x:v.x/L,y:v.y/L,z:v.z/L};
+  })();
+  var SEP_FACTOR = 0.45; // cuánto se separan las piezas al "despiezar"
+
   // =====================================================
   //  CUADRADO (canvas 2D)
   // =====================================================
@@ -259,11 +272,16 @@
     var W = r.width, H = r.height;
     sqCtx.clearRect(0,0,W,H);
 
-    var pad = 46;
-    var avail = Math.min(W,H) - pad*2;
+    // hueco inferior reservado para el contador, para que no lo tape
+    var padTop = 46, padSide = 46, padBottom = 88;
+    var availW = W - padSide*2;
+    var availH = H - padTop - padBottom;
+    var avail = Math.min(availW, availH);
+    if(avail < 10) avail = Math.min(W,H) - 24; // salvaguarda en lienzos diminutos
     var cell = avail/base;
     var ox = (W - cell*base)/2;
-    var oy = (H - cell*base)/2;
+    var oy = padTop + (availH - cell*base)/2;
+    if(oy < padTop) oy = padTop;
 
     // celdas (rellenado por filas, de abajo a arriba)
     var total = base*base;
@@ -297,11 +315,11 @@
       // arriba
       sqCtx.fillText(String(base), ox+cell*base/2, oy-22);
       tick(ox,oy-12,ox+cell*base,oy-12);
-      // izquierda
+      // derecha (se rotula a la derecha para no chocar con el contador)
       sqCtx.save();
-      sqCtx.translate(ox-24, oy+cell*base/2); sqCtx.rotate(-Math.PI/2);
+      sqCtx.translate(ox+cell*base+24, oy+cell*base/2); sqCtx.rotate(-Math.PI/2);
       sqCtx.fillText(String(base),0,0); sqCtx.restore();
-      tickV(ox-12,oy,ox-12,oy+cell*base);
+      tickV(ox+cell*base+12,oy,ox+cell*base+12,oy+cell*base);
     }
   }
   function tick(x1,y,x2,y2){ sqCtx.strokeStyle='#1e2a52';sqCtx.lineWidth=1.5;
@@ -329,33 +347,39 @@
 
   var group = new THREE.Group();
   scene.add(group);
-  var cubelets = []; // {mesh, home:Vector3, dir:Vector3, order}
+  var cubelets = [];        // array de meshes (cada uno con userData.home/dir/order)
+  var currentEdgeGeo = null; // geometría de aristas del build actual (para liberar)
 
   var SOLID_MAT, CRYSTAL_MAT, EDGE_SOLID, EDGE_CRYSTAL, GEO;
   function ensureShared(){
     GEO = GEO || new THREE.BoxGeometry(0.92,0.92,0.92);
     SOLID_MAT = SOLID_MAT || new THREE.MeshPhongMaterial({color:COLS.cielo,shininess:70});
-    CRYSTAL_MAT = CRYSTAL_MAT || new THREE.MeshPhongMaterial({color:COLS.cristal,transparent:true,opacity:0.16,shininess:90,depthWrite:false});
+    CRYSTAL_MAT = CRYSTAL_MAT || new THREE.MeshPhongMaterial({color:COLS.cristal,transparent:true,opacity:0.16,shininess:90,depthWrite:false,side:THREE.DoubleSide});
     EDGE_SOLID = EDGE_SOLID || new THREE.LineBasicMaterial({color:0x0c1330});
     EDGE_CRYSTAL = EDGE_CRYSTAL || new THREE.LineBasicMaterial({color:COLS.aristaCristal});
   }
 
   function buildCube(n){
     ensureShared();
-    // limpiar (sin tocar geometrías/materiales compartidos)
-    for(var i=0;i<cubelets.length;i++){ group.remove(cubelets[i].mesh); }
+    // limpiar el build anterior de verdad (este era el bug principal:
+    // se hacía group.remove(cubelets[i].mesh) y .mesh no existía -> no borraba nada)
+    for(var i=0;i<cubelets.length;i++){
+      var old = cubelets[i];
+      group.remove(old);
+    }
     cubelets.length = 0;
+    if(currentEdgeGeo){ currentEdgeGeo.dispose(); currentEdgeGeo = null; }
 
     var step = 1.0; // separación entre centros de cubitos
     var off = (n-1)/2;
-    var edgeGeo = new THREE.EdgesGeometry(GEO);
+    currentEdgeGeo = new THREE.EdgesGeometry(GEO);
     var order = 0;
     // orden de construcción: capa (y) de abajo arriba, luego z, luego x
     for(var y=0;y<n;y++){
       for(var z=0;z<n;z++){
         for(var x=0;x<n;x++){
           var mesh = new THREE.Mesh(GEO, crystal?CRYSTAL_MAT:SOLID_MAT);
-          var line = new THREE.LineSegments(edgeGeo, crystal?EDGE_CRYSTAL:EDGE_SOLID);
+          var line = new THREE.LineSegments(currentEdgeGeo, crystal?EDGE_CRYSTAL:EDGE_SOLID);
           mesh.add(line);
           var hx=(x-off)*step, hy=(y-off)*step, hz=(z-off)*step;
           mesh.userData.home = new THREE.Vector3(hx,hy,hz);
@@ -366,15 +390,12 @@
           mesh.userData.order = order++;
           mesh.position.copy(mesh.userData.home);
           mesh.scale.setScalar(0.0001);
+          mesh.renderOrder = crystal?1:0;
           group.add(mesh);
           cubelets.push(mesh);
         }
       }
     }
-    // encajar cámara según tamaño
-    var fit = n*1.9 + 1.5;
-    camera.position.set(fit*0.62, fit*0.52, fit*0.9);
-    camera.lookAt(0,0,0);
     group.rotation.set(0,0,0);
   }
 
@@ -392,6 +413,17 @@
     renderer.setSize(r.width,r.height,false);
     camera.aspect = r.width/Math.max(1,r.height);
     camera.updateProjectionMatrix();
+  }
+
+  // encuadre automático y consistente para cualquier base (y al despiezar)
+  function frameCamera(){
+    var fovRad = camera.fov*Math.PI/180;
+    // radio del cubo en un eje + media arista de un cubito + separación actual
+    var rAxis = (base-1)/2 + 0.46 + explode*base*SEP_FACTOR;
+    var rs = rAxis*1.7320508;              // radio de la esfera envolvente
+    var dist = (rs/Math.sin(fovRad/2))*1.06; // 6% de aire para no recortar al girar
+    camera.position.set(CAM.x*dist, CAM.y*dist, CAM.z*dist);
+    camera.lookAt(0,0,0);
   }
 
   // rotación por arrastre, AISLADA a este canvas
@@ -442,7 +474,7 @@
 
     // --- cubo ---
     var revealCount = build*nCb;
-    var visCb=0;
+    var visCb=0, sep=explode*base*SEP_FACTOR;
     for(var i=0;i<cubelets.length;i++){
       var m=cubelets[i];
       var ord=m.userData.order;
@@ -452,12 +484,14 @@
       m.scale.setScalar(s);
       if(s>0.5) visCb++;
       // separación radial
-      var h=m.userData.home, dr=m.userData.dir, sep=explode*base*0.55;
+      var h=m.userData.home, dr=m.userData.dir;
       m.position.set(h.x+dr.x*sep, h.y+dr.y*sep, h.z+dr.z*sep);
     }
     if(visCb!==lastShownCb){ cbCount.textContent=visCb; lastShownCb=visCb; }
 
     if(autoRotate && !dragging) group.rotation.y += 0.004;
+
+    frameCamera();
     renderer.render(scene,camera);
   }
 
@@ -478,12 +512,19 @@
     document.getElementById('lgCbSide').textContent=sB;
   }
 
+  function resetExplode(){
+    explode=0; explodeTarget=0;
+    var b=document.getElementById('cbExplode');
+    if(b){ b.setAttribute('aria-pressed','false'); b.textContent='Separar piezas'; }
+  }
+
   function setBase(n,animateBuild){
     base=n;
     updateLedger();
     Array.prototype.forEach.call(document.querySelectorAll('#bases button'),function(b){
       b.setAttribute('aria-pressed', String(+b.dataset.n===n));
     });
+    resetExplode();      // cada base empieza juntita
     buildCube(n);
     lastShownSq=-1; lastShownCb=-1;
     if(REDUCE){ build=1; buildTarget=1; }
@@ -527,7 +568,7 @@
   expBtn.addEventListener('click',function(){
     var on=this.getAttribute('aria-pressed')!=='true';
     this.setAttribute('aria-pressed',String(on));
-    this.textContent=on?'Juntar capas':'Separar capas';
+    this.textContent=on?'Juntar piezas':'Separar piezas';
     explodeTarget=on?1:0;
   });
   var crysBtn=document.getElementById('cbCrystal');
